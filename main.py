@@ -4,175 +4,319 @@ from tkinter import messagebox
 WORD_LENGTH = 5
 MAX_ATTEMPTS = 6
 
+GREEN = "#6aaa64"
+YELLOW = "#c9b458"
+GRAY = "#3a3a3c"
+DARK = "#121213"
+LIGHT = "#ffffff"
+BORDER = "#565758"
 
-class WordGame:
+
+class WordleDuel:
 
     def __init__(self):
 
         self.root = tk.Tk()
-        self.root.title("Word Guess Game")
-        self.root.geometry("700x600")
+        self.root.title("Wordle Duel")
+        self.root.geometry("900x800")
+        self.root.configure(bg=DARK)
+        self.root.resizable(False, False)
 
         self.show_menu()
 
         self.root.mainloop()
 
-    def clear(self):
-
+    def clear_window(self):
         for widget in self.root.winfo_children():
             widget.destroy()
 
+    # ---------------- MENU ----------------
+
     def show_menu(self):
 
-        self.clear()
+        self.clear_window()
 
         title = tk.Label(
             self.root,
-            text="WORD GUESS GAME",
-            font=("Arial", 28, "bold")
+            text="🟩 WORD CLASH 🟨",
+            font=("Segoe UI", 30, "bold"),
+            bg=DARK,
+            fg=LIGHT
         )
-        title.pack(pady=40)
+        title.pack(pady=60)
 
-        info = tk.Label(
+        subtitle = tk.Label(
             self.root,
-            text="Player 1 enters a word\nPlayer 2 guesses",
-            font=("Arial", 16)
+            text="Player 1 enters a secret word\nPlayer 2 tries to guess it",
+            font=("Segoe UI", 14),
+            bg=DARK,
+            fg="lightgray"
         )
-        info.pack()
+        subtitle.pack()
 
-        start_btn = tk.Button(
+        tk.Button(
             self.root,
-            text="Start",
-            font=("Arial", 18),
+            text="Play",
+            font=("Segoe UI", 16, "bold"),
+            width=20,
+            bg=GREEN,
+            fg="white",
+            relief="flat",
             command=self.secret_word_screen
+        ).pack(pady=20)
+
+        tk.Button(
+            self.root,
+            text="Rules",
+            font=("Segoe UI", 16),
+            width=20,
+            bg=GRAY,
+            fg="white",
+            relief="flat",
+            command=self.show_rules
+        ).pack(pady=10)
+
+        tk.Button(
+            self.root,
+            text="Exit",
+            font=("Segoe UI", 16),
+            width=20,
+            bg="#8b0000",
+            fg="white",
+            relief="flat",
+            command=self.root.destroy
+        ).pack(pady=10)
+
+    def show_rules(self):
+
+        messagebox.showinfo(
+            "Rules",
+            f"""
+    Player 1 enters a secret word.
+
+    Player 2 tries to guess it.
+
+    🟩 Green:
+    Correct letter in the correct position.
+
+    🟨 Yellow:
+    Correct letter in the wrong position.
+
+    ⬛ Gray:
+    Letter is not in the word.
+
+    Maximum attempts: {MAX_ATTEMPTS}
+    """
         )
 
-        start_btn.pack(pady=30)
+    # ---------------- SECRET WORD ----------------
 
     def secret_word_screen(self):
 
-        self.clear()
+        self.clear_window()
 
         title = tk.Label(
             self.root,
-            text="Игрок 1",
-            font=("Arial", 24)
+            text="Player 1",
+            font=("Segoe UI", 28, "bold"),
+            bg=DARK,
+            fg=LIGHT
         )
-        title.pack(pady=20)
+        title.pack(pady=40)
 
-        label = tk.Label(
+        tk.Label(
             self.root,
-            text=f"Enter an English word ({WORD_LENGTH} letters)",
-            font=("Arial", 14)
-        )
-        label.pack()
+            text=f"Enter a secret {WORD_LENGTH}-letter word",
+            font=("Segoe UI", 14),
+            bg=DARK,
+            fg=LIGHT
+        ).pack()
 
         self.secret_entry = tk.Entry(
             self.root,
-            font=("Arial", 18),
+            font=("Consolas", 24),
+            justify="center",
             show="*"
         )
         self.secret_entry.pack(pady=20)
 
-        btn = tk.Button(
+        tk.Button(
             self.root,
-            text="Continue",
-            command=self.start_guessing
-        )
-        btn.pack()
+            text="Start Game",
+            font=("Segoe UI", 14, "bold"),
+            bg=GREEN,
+            fg="white",
+            relief="flat",
+            command=self.start_game
+        ).pack()
 
-    def start_guessing(self):
+    def start_game(self):
 
-        word = self.secret_entry.get().lower()
+        word = self.secret_entry.get().lower().strip()
 
         if len(word) != WORD_LENGTH:
             messagebox.showerror(
                 "Error",
-                f"Enter a word of {WORD_LENGTH} letters."
+                f"The word must contain exactly {WORD_LENGTH} letters."
             )
             return
 
         if not word.isalpha():
             messagebox.showerror(
                 "Error",
-                "Only English letters."
+                "Only English letters are allowed."
             )
             return
 
         self.secret_word = word
         self.attempt = 0
 
-        self.guess_screen()
+        self.show_game()
 
-    def guess_screen(self):
+    # ---------------- GAME ----------------
 
-        self.clear()
+    def show_game(self):
+
+        self.clear_window()
 
         title = tk.Label(
             self.root,
-            text="Player 2 guesses",
-            font=("Arial", 24)
+            text="Player 2 is Guessing",
+            font=("Segoe UI", 24, "bold"),
+            bg=DARK,
+            fg=LIGHT
         )
         title.pack(pady=10)
 
-        self.board = tk.Frame(self.root)
+        self.attempt_label = tk.Label(
+            self.root,
+            text=f"Attempt 1 of {MAX_ATTEMPTS}",
+            font=("Segoe UI", 12),
+            bg=DARK,
+            fg="lightgray"
+        )
+
+        self.attempt_label.pack()
+
+        self.board = tk.Frame(self.root, bg=DARK)
         self.board.pack(pady=20)
 
         self.rows = []
 
         for _ in range(MAX_ATTEMPTS):
 
-            row = []
-
-            frame = tk.Frame(self.board)
+            frame = tk.Frame(self.board, bg=DARK)
             frame.pack()
+
+            row = []
 
             for _ in range(WORD_LENGTH):
 
-                lbl = tk.Label(
+                cell = tk.Label(
                     frame,
                     text="",
-                    width=4,
-                    height=2,
+                    width=3,
+                    height=1,
+                    font=("Segoe UI", 24, "bold"),
+                    bg=DARK,
+                    fg=LIGHT,
                     relief="solid",
-                    font=("Arial", 18, "bold"),
-                    bg="white"
+                    borderwidth=2
                 )
 
-                lbl.pack(side="left", padx=2, pady=2)
+                cell.pack(
+                    side="left",
+                    padx=4,
+                    pady=4
+                )
 
-                row.append(lbl)
+                row.append(cell)
 
             self.rows.append(row)
 
-        self.entry = tk.Entry(
+        self.guess_entry = tk.Entry(
             self.root,
-            font=("Arial", 18)
+            font=("Consolas", 22),
+            justify="center"
         )
 
-        self.entry.pack(pady=15)
+        self.guess_entry.pack(pady=15)
 
-        btn = tk.Button(
+        self.guess_entry.focus()
+
+        tk.Button(
             self.root,
-            text="Проверить",
-            font=("Arial", 14),
+            text="Submit Guess",
+            font=("Segoe UI", 14, "bold"),
+            bg=GREEN,
+            fg="white",
+            relief="flat",
             command=self.check_guess
+        ).pack()
+
+        self.create_keyboard()
+
+    # ---------------- KEYBOARD ----------------
+
+    def create_keyboard(self):
+
+        keyboard_frame = tk.Frame(
+            self.root,
+            bg=DARK
         )
 
-        btn.pack()
+        keyboard_frame.pack(
+            pady=20
+        )
+
+        self.keyboard_buttons = {}
+
+        rows = [
+            "QWERTYUIOP",
+            "ASDFGHJKL",
+            "ZXCVBNM"
+        ]
+
+        for letters in rows:
+
+            row_frame = tk.Frame(
+                keyboard_frame,
+                bg=DARK
+            )
+
+            row_frame.pack()
+
+            for letter in letters:
+
+                btn = tk.Label(
+                    row_frame,
+                    text=letter,
+                    width=3,
+                    height=1,
+                    bg=GRAY,
+                    fg="white",
+                    font=("Segoe UI", 12, "bold")
+                )
+
+                btn.pack(
+                    side="left",
+                    padx=2,
+                    pady=2
+                )
+
+                self.keyboard_buttons[letter] = btn
+
+    # ---------------- CHECK ----------------
 
     def check_guess(self):
 
-        guess = self.entry.get().lower()
+        guess = self.guess_entry.get().lower().strip()
 
         if len(guess) != WORD_LENGTH:
             messagebox.showerror(
                 "Error",
-                f"{WORD_LENGTH} letters required."
+                f"Please enter exactly {WORD_LENGTH} letters."
             )
-            return
-
-        if not guess.isalpha():
             return
 
         row = self.rows[self.attempt]
@@ -183,43 +327,124 @@ class WordGame:
 
             row[i]["text"] = letter.upper()
 
-            if letter == self.secret_word[i]:
+            color = GRAY
 
-                row[i]["bg"] = "green"
-                row[i]["fg"] = "white"
+            if letter == self.secret_word[i]:
+                color = GREEN
 
             elif letter in self.secret_word:
+                color = YELLOW
 
-                row[i]["bg"] = "gold"
-                row[i]["fg"] = "black"
+            row[i]["bg"] = color
+            row[i]["fg"] = "white"
 
-            else:
+            key = self.keyboard_buttons.get(
+                letter.upper()
+            )
 
-                row[i]["bg"] = "gray"
-                row[i]["fg"] = "white"
+            if key:
+
+                current = key["bg"]
+
+                if color == GREEN:
+                    key["bg"] = GREEN
+
+                elif color == YELLOW and current != GREEN:
+                    key["bg"] = YELLOW
+
+                elif current not in (GREEN, YELLOW):
+                    key["bg"] = GRAY
 
         if guess == self.secret_word:
 
-            messagebox.showinfo(
-                "Victory",
-                f"Word guessed in {self.attempt + 1} attempts!"
-            )
-
-            self.show_menu()
+            self.win_screen()
             return
 
         self.attempt += 1
 
-        self.entry.delete(0, tk.END)
+        self.guess_entry.delete(0, tk.END)
 
-        if self.attempt >= MAX_ATTEMPTS:
+        if self.attempt < MAX_ATTEMPTS:
 
-            messagebox.showinfo(
-                "Defeat",
-                f"The word was: {self.secret_word.upper()}"
+            self.attempt_label.config(
+                text=f"Attempt {self.attempt + 1} of {MAX_ATTEMPTS}"
             )
 
-            self.show_menu()
+        else:
+
+            self.lose_screen()
+
+    # ---------------- WIN ----------------
+
+    def win_screen(self):
+
+        self.clear_window()
+
+        tk.Label(
+            self.root,
+            text="🏆 YOU WIN!",
+            font=("Segoe UI", 34, "bold"),
+            bg=DARK,
+            fg=GREEN
+        ).pack(pady=50)
+
+        tk.Label(
+            self.root,
+            text=f"The word was: {self.secret_word.upper()}",
+            font=("Segoe UI", 18),
+            bg=DARK,
+            fg=LIGHT
+        ).pack()
+
+        tk.Label(
+            self.root,
+            text=f"Attempts used: {self.attempt + 1}",
+            font=("Segoe UI", 14),
+            bg=DARK,
+            fg="lightgray"
+        ).pack(pady=10)
+
+        tk.Button(
+            self.root,
+            text="Main Menu",
+            font=("Segoe UI", 14),
+            bg=GREEN,
+            fg="white",
+            relief="flat",
+            command=self.show_menu
+        ).pack(pady=30)
+
+    # ---------------- LOSE ----------------
+
+    def lose_screen(self):
+
+        self.clear_window()
+
+        tk.Label(
+            self.root,
+            text="❌ GAME OVER",
+            font=("Segoe UI", 34, "bold"),
+            bg=DARK,
+            fg="#ff4d4d"
+        ).pack(pady=50)
+
+        tk.Label(
+            self.root,
+            text=f"The correct word was: {self.secret_word.upper()}",
+            font=("Segoe UI", 18),
+            bg=DARK,
+            fg=LIGHT
+        ).pack()
+
+        tk.Button(
+            self.root,
+            text="Main Menu",
+            font=("Segoe UI", 14),
+            bg=GREEN,
+            fg="white",
+            relief="flat",
+            command=self.show_menu
+        ).pack(pady=30)
 
 
-WordGame()
+WordleDuel()
